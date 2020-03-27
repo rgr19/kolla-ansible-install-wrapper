@@ -1,8 +1,30 @@
-# Ansible starter 
+# Kolla-ansible installation wrapper
 
-## Issues
+TODO:
 
-### Centos 7 with Python 2.7.5
+- describe issues with python version and certificates
+- describe issues with self signed certificates and keystone
+- write guide
+- write configuration in inventories
+
+## Basic use
+
+TODO
+
+```shell script
+
+make deploy
+make destroy
+make init-runonce
+make run-demo-image
+```
+
+
+## Development 
+
+### Issues
+
+#### Centos 7 with Python 2.7.5
 
 Python <= 2.7.9 will not trust self-signed or privately signed CAs even
 if they are added into the OS trusted CA folder and update-ca-trust is
@@ -12,7 +34,7 @@ Python Requests library, either CA verification must be explicitly disabled
 in the service or the path to the CA certificate must be configured using
 the ``openstack_cacert`` parameter.
 
-### Certificates
+#### Certificates
 
 Set in globals.yml
 
@@ -79,7 +101,7 @@ kolla_internal_fqdn_cacert: "{{ node_config }}/certificates/haproxy-ca-internal.
 {% endraw %}{% endif %}{% raw %}
 ```
 
-## Nova endpoints
+### Nova endpoints
 
 ok: [192.168.8.158] => (item={u'url': u'http://10.0.0.10:8774/v2/%(tenant_id)s', u'interface': u'admin', u'service': u'nova_legacy'})
 ok: [192.168.8.158] => (item={u'url': u'http://10.0.0.10:8774/v2/%(tenant_id)s', u'interface': u'internal', u'service': u'nova_legacy'})                                                                                                     
