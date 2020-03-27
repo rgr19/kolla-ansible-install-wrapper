@@ -1,0 +1,4 @@
+- name: 'WRITE kolla-ansible bash wrapper with ARGS {{ args }}'
+  include: "wrapper.yml"
+  vars:
+    exec: 'kolla-ansible'

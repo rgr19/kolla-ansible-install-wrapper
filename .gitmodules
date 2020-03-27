@@ -1,0 +1,8 @@
+[submodule "submodules/kolla"]
+	path = submodules/kolla
+	url = https://github.com/openstack/kolla
+	branch = stable/train
+[submodule "submodules/kolla-ansible"]
+	path = submodules/kolla-ansible
+	url = https://github.com/openstack/kolla-ansible
+	branch = stable/train

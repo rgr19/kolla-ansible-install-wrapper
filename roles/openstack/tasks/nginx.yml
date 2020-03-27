@@ -1,0 +1,9 @@
+
+- name: Configure nginx /etc/nginx/conf.d/openstack.conf to route Horizon Dashboard from {{ openstack.node }}:443
+  template:
+    src:  nginx/conf.d/{{ item }}.j2
+    dest: /etc/nginx/conf.d/{{ item }}
+  notify: restart (enable) nginx
+  with_items:
+    - openstack.http.conf
+    - openstack.https.conf

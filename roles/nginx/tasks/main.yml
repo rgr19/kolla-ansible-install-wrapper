@@ -1,0 +1,23 @@
+---
+
+- name: "Install nginx"
+  become: true
+  block:
+    - import_tasks: redhat.yml
+      when: system.os_type == 'redhat'
+    - import_tasks: debian.yml
+      when: system.os_type == 'debian'
+
+- name: Configure nginx /etc/nginx/nginx.conf to not serve anything by default
+  template:
+    src:  nginx/nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+  notify: restart (enable) nginx
+
+- name: Create /etc/nginx/conf.d DIR
+  file:
+    path: /etc/nginx/conf.d
+    state: directory
+  notify: restart (enable) nginx
+
+

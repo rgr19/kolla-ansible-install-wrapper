@@ -1,0 +1,29 @@
+---
+- block:
+    - debug:
+        msg: Check ssh variables
+      failed_when: |
+        superuser is not defined
+        or local_user is not defined
+        or local_ssh_path is not defined
+        or ssh_path is not defined
+        or ssh_key is not defined
+
+    - include: ssh_keys_create.yml
+      when: inventory_hostname == 'localhost'
+    - include: ssh_keys_distribute.yml
+      become: yes
+      become_user: '{{ ssh_user }}'
+      args:
+        user_key: '{{ ssh_key }}'
+        target_key: 'id_rsa'
+    - include: ssh_keys_distribute.yml
+      become: yes
+      become_user: '{{ local_user }}'
+      args:
+        user_key: '{{ ssh_key }}'
+        target_key: '{{ ssh_key }}'
+        ssh_user: '{{ local_user }}'
+        ssh_path: '~/.ssh'
+        ssh_key_path: '~/.ssh/id_rsa_{{ ssh_user }}'
+      when: inventory_hostname == 'localhost'

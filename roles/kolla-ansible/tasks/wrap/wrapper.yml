@@ -1,0 +1,32 @@
+- name: 'WRITE {{ exec }} bash wrapper with ARGS {{ args }}'
+  block:
+    - debug:
+        msg: |
+          Check if args is defined
+          Check if kwargs is defined
+          Check if dest is defined
+          Check if exec is defined
+      failed_when:
+        - (args is not defined) or (kwargs is not defined) or (dest is not defined) or (exec is not defined)
+    - blockinfile:
+        marker: "# {mark} ANSIBLE MANAGED BLOCK --> {{ exec | upper }} {{ args | upper }}"
+        create: yes
+        path: "{{ dest }}"
+        block: |2
+
+          python -c "print('#'*200)"
+          echo "#### PHASE: {{ args }} BEGIN"
+          python -c "print('='*200)"
+
+          {{ exec }} {{ args }} {{ kwargs }}
+
+          if [ $? -ne 0 ]; then
+            echo "PHASE: {{ args }} FAILED"
+            exit $?
+          else
+            echo "PHASE: {{ args }} END"
+          fi
+
+      register: out
+    - debug: var=out
+      tags: debug

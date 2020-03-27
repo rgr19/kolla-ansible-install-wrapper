@@ -1,0 +1,75 @@
+---
+- hosts: all
+  pre_tasks:
+    - debug:
+        msg: |
+          superuser: {{ superuser }}
+          python_version: {{ python_version }}
+      failed_when: (superuser is not defined) or (python_version is not defined)
+  roles:
+#    - { role: common } # authorize and do general OS setup
+#    - { role: superuser, become: yes } # create SUPERUSER
+#    - { role: venv, become: yes, become_user: '{{ superuser }}' } # create venv at SUPERUSER
+#    - { role: ssh } # generate and distribute ssh keys to SUPERUSER hosts
+
+- hosts: master
+  become: yes
+  become_user: '{{ superuser }}'
+  tasks:
+    - add_host:
+        name: '{{ groups["slaves"] | sort | first }}'
+        groups: openstack
+
+- hosts: openstack
+  pre_tasks:
+    - set_fact:
+        master_node: '{{ groups["master"] | sort | first }}'
+        system:
+          default_interface: '{{ ansible_default_ipv4.interface }}'
+    - set_fact:
+        openstack:
+          node: '{{ groups["openstack"] | first }}'
+          interface: '{{ system.default_interface }}'
+          management:
+            interface: '{{ system.default_interface }}.{{ openstack.management.vid }}'
+          public:
+            interface: '{{ system.default_interface }}.{{ openstack.public.vid }}'
+    - debug:
+        msg: |
+          OPENSTACK: {{ openstack | to_nice_yaml }}
+  roles:
+#    - { role: nginx, become: yes  }
+#    - { role: openstack, become: yes, become_user: root }
+    - { role: kolla-ansible, become: yes, become_user: '{{ superuser }}'  }
+
+  post_tasks:
+    - name:
+      become: yes
+      become_user: '{{ local_user }}'
+      delegate_to: '{{ master_node }}'
+      block:
+        - name: Build ssh wrapper for kolla-ansible
+          blockinfile:
+            owner: "{{ local_user }}"
+            mode: 0755
+            create: yes
+            path: '{{ item.local }}'
+            block: |2
+              python -c "print('#'*200)"
+              echo "#### Local SSH wrapper for {{ item.remote }}"
+              python -c "print('='*200)"
+              export TERM=xterm
+              echo "Execute this script to connect to {{ superuser }} and start deployment of kolla-ansible..."
+              ssh {{ superuser }}@{{ openstack.node }} \
+                -i {{ local_ssh_path }}/{{ ssh_key }} \
+                -o UserKnownHostsFile=/dev/null \
+                -o StrictHostKeyChecking=no \
+                -t \
+                "bash {{ item.remote }}"
+              python -c "print('#'*200)"
+          with_items:
+            - { local: '{{ kolla_ansible_ssh_deployer_path }}',     remote: '{{ kolla_ansible_deployer_path }}' }
+            - { local: '{{ kolla_ansible_ssh_destroyer_path }}',    remote: '{{ kolla_ansible_destroyer_path }}' }
+            - { local: '{{ kolla_ansible_ssh_init_runonce_path }}', remote: '{{ kolla_ansible_init_runonce_path }}' }
+            - { local: '{{ kolla_ansible_ssh_run_demo_image }}', remote: '{{ kolla_ansible_run_demo_image }}' }
+

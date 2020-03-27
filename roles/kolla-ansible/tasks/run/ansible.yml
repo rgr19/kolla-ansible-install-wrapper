@@ -1,0 +1,17 @@
+
+- name: 'RUN ansible with ARGS {{ args }}'
+  block:
+    - debug:
+        msg: Check if args is defined
+      failed_when: args is not defined
+    - shell:
+        cmd: ansible {{ args }}
+        executable:  "{{ venv_path }}/bin/bashvenv"
+        chdir: '{{ superuser_home }}'
+      environment:
+        ANSIBLE_CONFIG: '{{ kolla_config_dir }}/ansible.cfg'
+        KOLLA_CONFIG_PATH: '{{ kolla_config_dir }}'
+        ANSIBLE_INVENTORY: '{{ kolla_config_dir }}/multinode'
+      register: out
+    - debug: var=out
+      tags: debug

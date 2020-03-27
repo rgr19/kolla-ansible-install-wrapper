@@ -1,0 +1,48 @@
+---
+- name: "Execute tasks to distribute SSH keys for user {{ ssh_user }}"
+  block:
+    - debug:
+        msg: Check ssh-distribute variables
+      failed_when: |
+        ssh_user is not defined
+        or user_key is not defined
+        or target_key is not defined
+
+    - name: Create {{ ssh_path }} directory
+      file:
+        path: '{{ ssh_path }}'
+        state: directory
+        owner: "{{ ssh_user }}"
+        group: '{{ ssh_user }}'
+        mode: 0700
+
+    - name: "Copy key to hosts"
+      copy:
+        src: '{{ local_ssh_path }}/{{ item.src }}'
+        dest: '{{ ssh_path }}/{{ item.dest }}'
+        owner: "{{ ssh_user }}"
+        group: "{{ ssh_user }}"
+        mode: '{{ item.mode }}'
+      with_items:
+        - { src: 'authorized_keys', dest: 'authorized_keys', mode: 'u+rw,g-wx,o-wx' }
+        - { src: '{{ user_key }}', dest: '{{ target_key }}', mode: 'u+rw,g-rwx,o-rwx' }
+        - { src: '{{ user_key }}.pub', dest: '{{ target_key }}.pub', mode:  'u+rw,g-wx,o-wx' }
+      register: out
+
+    - name: "Touch authorized_keys"
+      file:
+        path: '{{ ssh_path }}/authorized_keys'
+        state: file
+        mode: 'u+rw,g-wx,o-rwx'
+
+    - name: "Authorize key"
+      authorized_key:
+        user: "{{ ssh_user }}"
+        key: "{{ item }}"
+        state: present
+        path: '{{ ssh_path }}/authorized_keys'
+        comment: "Ansible key for OPENSTACK"
+        manage_dir: yes
+      with_file:
+        - '{{ local_ssh_path }}/{{ user_key }}.pub'
+

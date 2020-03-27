@@ -1,0 +1,11 @@
+---
+- include: authorize.yml
+
+- name: "Execute 'common' subrole depending on OS FAMILY"
+  become: true
+  block:
+    - import_tasks: redhat.yml
+      when: system.os_type == 'redhat'
+    - import_tasks: debian.yml
+      when: system.os_type == 'debian'
+

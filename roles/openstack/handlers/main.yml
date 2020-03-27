@@ -1,0 +1,14 @@
+
+- name: Reboot
+  block:
+    - name:  reboot if we need it
+      shell: sleep 2 && shutdown -r now "Ansible updates triggered"
+      async: 1
+      poll: 0
+      ignore_errors: true
+    - name:  waiting for server to come back
+      wait_for_connection:
+        connect_timeout: 5
+        sleep: 5
+        delay: 60
+        timeout: 600

@@ -1,0 +1,9 @@
+
+---
+- name: "[debian] Apt install nginx"
+  become: yes
+  block:
+    - apt:
+        name: nginx
+        state: present
+      notify: Systemctl restart (enable) nginx

@@ -1,0 +1,25 @@
+upstream https_openstack {
+    server {{ kolla.vip_external.address }}:443;
+}
+
+server {
+    listen {{ openstack.node }}:443 ssl;
+
+    ssl_certificate        /home/kolla/kolla/certificates/private/external/external.crt;
+    ssl_certificate_key    /home/kolla/kolla/certificates/private/external/external.key;
+    ssl_client_certificate /etc/pki/ca-trust/source/anchors/external.crt;
+    ssl_verify_client      optional;
+
+    location / {
+        proxy_set_header    Host $host;
+        proxy_set_header    X-Real-IP $remote_addr;
+        proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header    X-Forwarded-Proto $scheme;
+
+        # Enable Web Socket for Browser notification in Horizon 24+
+        proxy_set_header    Upgrade $http_upgrade;
+        proxy_set_header    Connection "Upgrade";
+        proxy_pass https://https_openstack;
+    }
+
+}

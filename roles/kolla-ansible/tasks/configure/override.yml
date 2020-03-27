@@ -1,0 +1,39 @@
+
+# git master branch certificates/task/generate.yml matches train/stable global.yml
+# and generate.yml from that is outdated. NOTE: it seems broken
+- name: Override certificates generate.yml with local copy from kolla-ansible master
+  become: yes
+  copy:
+    src: "override/kolla-ansible/ansible/{{ item }}"
+    dest: "{{ venv_path }}/share/kolla-ansible/ansible/{{ item }}"
+    owner: "{{ superuser }}"
+    group:  "{{ superuser }}"
+    force: yes
+  with_items:
+    - "roles/certificates/tasks/generate.yml"
+    - "roles/certificates/templates/openssl-kolla.cnf.j2"
+    - "roles/certificates/templates/openssl-kolla-internal.cnf.j2"
+
+  register: out
+
+- debug:
+    msg: |
+      {{ out | to_nice_yaml }}
+
+# init-runonce has wrong IP for ext_net_***
+- name: Override certificates generate.yml with local copy from kolla-ansible master
+  become: yes
+  copy:
+    src: "override/kolla-ansible/{{ item }}"
+    dest: "{{ venv_path }}/share/kolla-ansible/{{ item }}"
+    owner: "{{ superuser }}"
+    group:  "{{ superuser }}"
+    force: yes
+  with_items:
+    - "init-runonce"
+
+  register: out
+
+- debug:
+    msg: |
+      {{ out | to_nice_yaml }}

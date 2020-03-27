@@ -1,0 +1,80 @@
+
+# - name: Insert/Update eth0 configuration stanza in /etc/network/interfaces
+#         (it might be better to copy files into /etc/network/interfaces.d/)
+#   blockinfile:
+#     path: /etc/network/interfaces
+#     block: |
+#       iface eth0 inet static
+#           address 192.0.2.23
+#           netmask 255.255.255.0
+
+- name: Remove Network-Manager
+  yum:
+    name: "{{ packages }}"
+    state: absent
+  vars:
+    packages:
+      - NetworkManager
+      - NetworkManager-libnm
+      - NetworkManager-team
+      - NetworkManager-tui
+      - NetworkManager-wifi
+  register: out0
+
+- name: Pkill dhclient
+  command:
+    cmd: pkill -9 dhclient || true
+    executable: bash
+  when: out0.changed
+
+- name: Add the 802.1q module
+  modprobe:
+    name: 8021q
+    state: present
+  register: out1
+
+- name: insert '8021q' to /etc/modules
+  lineinfile:
+    path: /etc/modules
+    regexp: '8021q'
+    line: 8021q
+    create: yes
+  register: out2
+
+- name: Systemctl restart (enable) network
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: network
+    enabled: yes
+  when: |
+    out0.changed or
+    out1.changed or
+    out2.changed
+
+- name: Add the network configuration of system interfaces
+  template:
+    src: network/ifcfg.dhcp.j2
+    dest: /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
+  loop_control:
+    loop_var: interface
+  with_items:
+    - '{{ system.interfaces }}'
+  register: out3
+
+- name: restart system interfaces
+  when: out3.changed
+  shell:
+    cmd: |
+      dhclient -r {{ interface }}
+      sudo ip addr flush dev {{ interface }}
+      ifdown {{ interface }} && ifup {{ interface }}
+    executable: bash
+  loop_control:
+    loop_var: interface
+  with_items:
+    - '{{ system.interfaces }}'
+  register: out4
+  failed_when:
+    - "'failed' in {{ out4.stderr }}"
+    - interface == openstack.interface

@@ -1,0 +1,16 @@
+
+- name: Add Kolla-Ansible prerequisites {{ packages }}
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - python-devel
+      - libffi-devel
+      - gcc
+      - openssl-devel
+      - libselinux-python
+  register: out
+- debug: var=out
+  tags: debug
+

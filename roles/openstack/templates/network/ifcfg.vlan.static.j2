@@ -1,0 +1,9 @@
+DEVICE="{{ item.interface }}"
+BOOTPROTO=static
+IPADDR="{{ item.ip }}"
+PREFIX=24
+NETWORK="{{ item.net }}"
+VLAN=yes
+ONPARENT=yes
+IPV4_FAILURE_FATAL="no"
+IPV6_FAILURE_FATAL="no"

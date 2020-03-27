@@ -1,0 +1,37 @@
+---
+- name: Build wrapper for kolla-ansible destroyer
+  vars:
+    dest: '{{ kolla_ansible_destroyer_path }}'
+  block:
+    - debug:
+        msg: dest is {{ dest }}
+    - name: "Make sure {{ dest }} exists and is empty."
+      file:
+        path: '{{ dest }}'
+        state: '{{ item }}'
+      with_items:
+        - absent
+        - touch
+    - lineinfile:
+        line: "#!/usr/bin/env bash"
+        path: "{{ dest }}"
+        create: yes
+    - lineinfile:
+        line: source {{ venv_path }}/bin/activate
+        path: "{{ dest }}"
+    - blockinfile:
+        marker: "# {mark} ANSIBLE MANAGED BLOCK --> ENV VARIABLES"
+        create: yes
+        path: "{{ dest }}"
+        block: |2
+          echo "Export env variables"
+          set -e
+          export ANSIBLE_CONFIG='{{ kolla_config_dir }}/ansible.cfg'
+          export KOLLA_CONFIG_PATH='{{ kolla_config_dir }}'
+          export ANSIBLE_INVENTORY='{{ kolla_config_dir }}/multinode'
+          export ANSIBLE_HOST_KEY_CHECKING=False
+    - include: kolla-ansible.yml
+      loop_control:
+        loop_var: args
+      with_items:
+        - 'destroy --yes-i-really-really-mean-it'

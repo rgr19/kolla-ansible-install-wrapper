@@ -1,0 +1,9 @@
+---
+- name: "[redhat] Yum install nginx"
+  become: yes
+  block:
+    - yum:
+        name: nginx
+        state: present
+      notify: Systemctl restart (enable) nginx
+

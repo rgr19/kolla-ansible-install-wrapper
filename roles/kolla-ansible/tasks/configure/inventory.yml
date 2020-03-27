@@ -1,0 +1,17 @@
+- name: Parse template multinode.j2  files to {{ kolla_config_dir }}
+  template:
+    src: kolla/inventory/multinode.j2
+    dest: '{{ kolla_config_dir }}/multinode'
+    owner: '{{ superuser }}'
+    group: '{{ superuser }}'
+  register: out
+  vars:
+    nodes:
+      control: '{{ openstack.node }}'
+      network: '{{ openstack.node }}'
+      compute: '{{ openstack.node }}'
+      monitoring: '{{ openstack.node }}'
+      storage:  '{{ openstack.node }}'
+
+- debug: var=out.stdout_lines
+  tags: debug

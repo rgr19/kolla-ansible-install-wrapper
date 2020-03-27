@@ -1,0 +1,4 @@
+- name: 'WRITE sudo kolla-ansible bash wrapper with ARGS {{ args }}'
+  include: "wrapper.yml"
+  vars:
+    exec: 'sudo kolla-ansible'

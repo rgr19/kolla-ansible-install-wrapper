@@ -1,0 +1,53 @@
+
+- name: Install lvm2
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - lvm2
+#
+#- name: Configure lvm devices filter to accept only CINDER lvm {{ openstack.storage.cinder.device }}{{ openstack.storage.cinder.number }} and SYSTEM device '{{ openstack.system.storage.device }}'
+#  template:
+#    src:  storage/lvm.conf.cinder.j2
+#    dest: /etc/lvm/lvm.conf
+#  with_items:
+#    - { system_dev: '{{ openstack.system.storage.device }}', cinder_lvm: '{{ openstack.storage.cinder.device }}{{ openstack.storage.cinder.number }}' }
+
+- name: Configure lvm to default settings
+  template:
+    src:  storage/lvm.conf.j2
+    dest: /etc/lvm/lvm.conf
+
+- name: Enable service lvm2-lvmetad and ensure it is not masked and is started
+  systemd:
+    name: lvm2-lvmetad
+    enabled: yes
+    masked: no
+    state: started
+
+- name: Create a new primary LVM partition /dev/{{ openstack.storage.cinder.device }}{{ openstack.storage.cinder.number }} for 'cinder-volumes' with 90% of space
+  parted:
+    device: '/dev/{{ openstack.storage.cinder.device }}'
+    number: '{{ openstack.storage.cinder.number }}'
+    flags: [ lvm ]
+    state: present
+    part_end: 90%
+
+- name: Create a volume group 'cinder-volumes' on top of /dev/{{ openstack.storage.cinder.device }}{{ openstack.storage.cinder.number }} with physical extent size = 128KiB
+  lvg:
+    vg: cinder-volumes
+    pvs:  '/dev/{{ openstack.storage.cinder.device }}{{ openstack.storage.cinder.number }}'
+    state: present
+    pesize: 128K
+
+- name: Create a logical volume 'compute-volume' on whole of vg 'cinder-volumes'
+  lvol:
+    vg: cinder-volumes
+    lv: compute-volume
+    state: present
+    force: yes
+    size: +100%FREE
+
+
+      

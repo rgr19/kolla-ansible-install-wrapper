@@ -1,0 +1,78 @@
+---
+- name: Build wrapper for kolla-ansible deployer
+  vars:
+    dest: '{{ kolla_ansible_deployer_path }}'
+  block:
+    - debug:
+        msg: dest is {{ dest }}
+    - name: "Make sure {{ dest }} exists and is empty."
+      file:
+        path: '{{ dest }}'
+        state: '{{ item }}'
+      with_items:
+        - absent
+        - touch
+    - lineinfile:
+        line: "#!/usr/bin/env bash"
+        path: "{{ dest }}"
+        create: yes
+    - lineinfile:
+        line: source {{ venv_path }}/bin/activate
+        path: "{{ dest }}"
+    - blockinfile:
+        marker: "# {mark} ANSIBLE MANAGED BLOCK --> ENV VARIABLES"
+        create: yes
+        path: "{{ dest }}"
+        block: |2
+          echo "Export env variables"
+          set -e
+          export ANSIBLE_CONFIG='{{ kolla_config_dir }}/ansible.cfg'
+          export KOLLA_CONFIG_PATH='{{ kolla_config_dir }}'
+          export ANSIBLE_INVENTORY='{{ kolla_config_dir }}/multinode'
+          export ANSIBLE_HOST_KEY_CHECKING=False
+
+    - include: kolla-ansible.yml
+      loop_control:
+        loop_var: args
+      with_items:
+        - 'certificates'
+
+    - include: wrapper.yml
+      vars:
+        exec: 'sudo chown'
+        args: 'kolla:kolla {{ kolla_config_dir }}/certificates -Rf'
+        kwargs:
+
+    - include: wrapper.yml
+      vars:
+        exec: 'sudo cp'
+        args: '$(find {{ kolla_config_dir }}/certificates | grep .crt)'
+        kwargs: '/etc/pki/ca-trust/source/anchors'
+
+    - include: wrapper.yml
+      vars:
+        exec: 'sudo update-ca-trust'
+        args: 'extract'
+        kwargs:
+
+    - include: wrapper.yml
+      vars:
+        exec: 'kolla-genpwd --passwords={{ kolla_config_dir }}/passwords.yml'
+        args:
+        kwargs:
+
+    - include: kolla-ansible.yml
+      loop_control:
+        loop_var: args
+      with_items:
+        - 'bootstrap-servers -e ansible_user={{ superuser }} -e ansible_python_interpreter=/usr/bin/python'
+        - 'prechecks'
+        - 'deploy'
+        - 'post-deploy'
+
+    - blockinfile:
+        marker: "# {mark} ANSIBLE MANAGED BLOCK --> CREDENTIALS"
+        path: "{{ dest }}"
+        block: |
+          echo "NOTE: credentials at {{ kolla_config_dir }}/admin-openrc.sh content:"
+          cat {{ kolla_config_dir }}/admin-openrc.sh

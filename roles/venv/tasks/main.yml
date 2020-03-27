@@ -1,0 +1,69 @@
+---
+
+- name: "Install python virtualenv."
+  become: true
+  block:
+    - name: Yum install python-virtualenv
+      yum:
+        name: python-virtualenv
+        state: present
+      register: out
+      when: system.os_type == 'redhat'
+    - name: Apt install python-virtualenv
+      apt:
+        name: python-virtualenv
+        state: present
+      register: out
+      when: system.os_type == 'debian'
+    - debug: var=out
+      tags: debug
+
+- name: "Create venv at PATH {{ venv_path }} with wrapper pyvenv."
+  block:
+    - debug: 
+        msg: "venv_path: {{ venv_path }}"
+      failed_when: venv_path is not defined
+
+    - name: 'Create virtualenv {{ venv_path }} with {{ python_version }}'
+      shell:
+        cmd: >
+            virtualenv {{ venv_path }}
+            -p {{ python_version }}
+            --system-site-packages
+
+    - debug: var=out
+      tags: debug
+      
+    - name: "Copy and parse template pyvenv.{{ system.os_type }}.j2 of virtualenv wrapper to {{ venv_path }}/bin/pyvenv"
+      template: 
+        src: pyvenv.{{ system.os_type }}.j2
+        dest: "{{ venv_path }}/bin/pyvenv"
+        owner: '{{ superuser }}'
+        group: '{{ superuser }}'
+        mode: u=rwx,g=rx,o=rx
+      register: out
+    - debug: var=out
+      tags: debug
+
+    - name: "Copy and parse template bashvenv.{{ system.os_type }}.j2 of virtualenv wrapper to {{ venv_path }}/bin/bashvenv"
+      template: 
+        src: bashvenv.{{ system.os_type }}.j2
+        dest: "{{ venv_path }}/bin/bashvenv"
+        owner: '{{ superuser }}'
+        group: '{{ superuser }}'
+        mode: u=rwx,g=rx,o=rx
+      register: out
+    - debug: var=out
+      tags: debug
+            
+    - name: Pip install ansible kolla-ansible
+      pip:
+        name:
+          - pip==20.0.2
+          - selinux
+        state: present
+        virtualenv: '{{ venv_path }}'
+        virtualenv_python: '{{ python_version }}'
+      register: out
+    - debug: var=out
+      tags: debug

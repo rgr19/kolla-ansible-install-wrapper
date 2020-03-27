@@ -1,0 +1,2 @@
+kolla_ansible_wrapper_path: '{{ kolla_config_dir }}_ansible_wrapper.sh'
+kolla_ansible_executor_path: '{{ playbook_dir }}/kolla_ansible_executor.sh'

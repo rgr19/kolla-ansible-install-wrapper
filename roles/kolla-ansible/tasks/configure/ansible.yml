@@ -1,0 +1,10 @@
+- name: Copy ansible.cfg to {{ kolla_config_dir }}
+  template:
+    src: kolla/ansible.cfg.j2
+    dest: '{{ kolla_config_dir }}/ansible.cfg'
+    owner: '{{ superuser }}'
+    group: '{{ superuser }}'
+  register: out
+- debug: var=out
+  tags: debug
+

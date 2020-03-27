@@ -1,0 +1,21 @@
+---
+- name: Build wrapper for kolla-ansible
+  vars:
+    # >- : Reduces \n\n to \n and \n to space
+    kwargs: >-
+              --configdir $KOLLA_CONFIG_PATH
+              --passwords $KOLLA_CONFIG_PATH/passwords.yml
+              --inventory $ANSIBLE_INVENTORY \
+
+              -e ansible_user={{ superuser }}
+              -e virtualenv={{ venv_path }}
+              -e virtualenv_site_packages=true
+              -e virtualenv_python={{ venv_python }}
+  block:
+    # When executing kolla-ansible commands other than bootstrap-servers,
+    # the variable ansible_python_interpreter should be set to the python interpreter installed in virtualenv.
+    # https://docs.openstack.org/kolla-ansible/latest/reference/deployment-and-bootstrapping/bootstrap-servers.html
+    - include: wrap/deployer.yml
+    - include: wrap/destroyer.yml
+    - include: wrap/init-runonce.yml
+    - include: wrap/run-demo-image.yml

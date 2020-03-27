@@ -1,0 +1,15 @@
+---
+
+#- include: vlan.yml
+#  become: yes
+#  become_user: root
+
+- name:
+  vars:
+    ansible_python_interpreter: "{{ venv_path }}/bin/python"
+    ansible_linux_interpreter: "{{ venv_path }}/bin/python"
+    ansible_executable: "{{ venv_path }}/bin/bashvenv"
+  block:
+#    - include: install.yml
+#    - include: configure.yml
+    - include: wrap.yml

@@ -1,0 +1,45 @@
+# Ansible special variables
+ansible_user: "{{ lookup('env','USER') }}"
+ansible_ssh_user: "{{ lookup('env','USER') }}"
+# Localhost user variables
+local_user: "{{ ansible_user }}"
+local_ssh_path: 'files/ssh'
+local_user_ssh_key: "{{ lookup('file', '~/.ssh/id_rsa.pub' ) }}"
+# Superuser with passwordless sudo used to operate kolla-ansible
+superuser: "{{ lookup('env','SUPERUSER' ) | default('openstack') }}"
+superuser_home: "/home/{{ superuser }}"
+# Virtualenv used to install and deploy kolla-ansible
+python_version: python2.7
+venv_path: '{{ superuser_home }}/venv/{{ python_version }}'
+venv_site_packages: "{{ venv_path }}/lib/{{ python_version }}/site-packages"
+venv_python: "{{ venv_path }}/bin/python"
+# Ssh role config
+ssh_user: '{{ superuser }}'
+ssh_key: 'id_rsa_{{ superuser }}'
+ssh_path: '{{ superuser_home }}/.ssh'
+ssh_key_path: '{{ superuser_home }}/.ssh/id_rsa'
+# kolla dirs
+kolla_config_dir: '{{ superuser_home }}/kolla' # default: /etc/kolla
+
+# Remote wrappers
+kolla_ansible_deployer_path: '{{ superuser_home }}/kolla_ansible_deployer.sh' # wrapper
+kolla_ansible_destroyer_path: '{{ superuser_home }}/kolla_ansible_destroyer.sh' # wrapper
+kolla_ansible_init_runonce_path: '{{ superuser_home }}/kolla_ansible_init_runonce.sh' # wrapper
+kolla_ansible_init_runonce_exec: '{{ venv_path }}/share/kolla-ansible/init-runonce' # executable for above wrapper
+kolla_ansible_run_demo_image: '{{ superuser_home }}/kolla_ansible_run_demo_image.sh'
+
+# Local wrappers
+kolla_ansible_ssh_destroyer_path: '{{ playbook_dir }}/files/kolla_ansible_destroyer.sh'
+kolla_ansible_ssh_deployer_path: '{{ playbook_dir }}/files/kolla_ansible_deployer.sh'
+kolla_ansible_ssh_init_runonce_path: '{{ playbook_dir }}/files/kolla_ansible_init_runonce.sh'
+kolla_ansible_ssh_run_demo_image: '{{ playbook_dir }}/files/kolla_ansible_run_demo_image.sh'
+
+# system vars
+system:
+  os_type: '{{ ansible_os_family | lower }}'
+  base_distro: '{{  ansible_distribution | lower }}' #
+
+  storage:
+    device: sda
+
+  default_interface: # dynamic

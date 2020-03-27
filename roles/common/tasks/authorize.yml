@@ -1,0 +1,6 @@
+---
+- name: "Authorize MASTER local_user on ALL"
+  authorized_key: 
+    user: "{{ local_user }}"
+    key: "{{ local_user_ssh_key }}"
+    state: present

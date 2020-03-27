@@ -1,0 +1,52 @@
+- name: Which python
+  shell:
+    cmd: which python
+    chdir: '{{ superuser_home }}'
+    executable: "{{ venv_path }}/bin/bashvenv"
+  register: out
+  tags: debug
+- debug: var=out
+  tags: debug
+
+- name: Which pip
+  shell:
+    cmd: which pip
+    chdir: '{{ superuser_home }}'
+    executable: "{{ venv_path }}/bin/bashvenv"
+  register: out
+  tags: debug
+- debug: var=out
+  tags: debug
+
+- name: Pip install ansible kolla-ansible
+  pip:
+    name:
+      - kolla-ansible
+      - ansible
+    state: present
+    virtualenv: '{{ venv_path }}'
+    virtualenv_python: '{{ python_version }}'
+  register: out
+- debug: var=out
+  tags: debug
+
+- name: Which ansible
+  shell:
+    cmd: which ansible
+    chdir: '{{ superuser_home }}'
+    executable: "{{ venv_path }}/bin/bashvenv"
+  register: out
+  tags: debug
+- debug: var=out
+  tags: debug
+
+- name: Which kolla-ansible
+  shell:
+    cmd: which kolla-ansible
+    chdir: '{{ superuser_home }}'
+    executable: "{{ venv_path }}/bin/bashvenv"
+  register: out
+  tags: debug
+- debug: var=out
+  tags: debug
+

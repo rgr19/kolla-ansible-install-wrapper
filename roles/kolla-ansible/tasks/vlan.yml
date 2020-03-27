@@ -1,0 +1,55 @@
+
+- name: Add the network configuration of INTERFACE {{ item }}
+  template:
+    src: network/ifcfg.vlan.static.j2
+    dest: /etc/sysconfig/network-scripts/ifcfg-{{ openstack.interface }}.{{ item.intf.vid }}
+  with_items:
+    - { intf: '{{ openstack.management }}',  net: '{{ vlan.network }}' }
+    - { intf: '{{ openstack.public }}',  net: '{{ vlan.network }}' }
+  register: out5
+  failed_when: |
+    openstack.interface is not defined
+    or vlan.network is not defined
+    or kolla.vip_external is not defined
+    or openstack.management is not defined
+    or openstack.public is not defined
+
+#- name: Add the network configuration of INTERFACE {{ public_interface }}
+#  template:
+#    src: network/ifcfg.vlan.j2
+#    dest: /etc/sysconfig/network-scripts/ifcfg-{{ public_interface }}
+#  with_items:
+#    - { interface: '{{ public_interface }}' }
+#  register: out6
+
+#- name: Add the network configuration of INTERFACE {{ internet_interface }}
+#  template:
+#    src: network/ifcfg.vlan.dhcp.j2
+#    dest: /etc/sysconfig/network-scripts/ifcfg-{{ internet_interface }}
+#  with_items:
+#    - { interface: '{{ internet_interface }}' }
+#  register: out7
+
+- name: restart vlan interfaces
+# debug : msg="{{ item.changed }}"
+  shell:
+    cmd: |
+      dhclient -r {{ item }}
+      sudo ip addr flush dev {{ item }}
+      ifdown {{ item }} && ifup {{ item }}
+    executable: bash
+  when: out5.changed # or out6.changed
+  with_items:
+    - '{{ openstack.management.interface }}'
+    - '{{ openstack.public.interface }}'
+
+#- name: Restart network service
+#  systemd:
+#    state: restarted
+#    daemon_reload: yes
+#    name: network
+#    enabled: yes
+#  when: |
+#    out5.changed
+#    or out6.changed
+##   or out7.changed

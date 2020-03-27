@@ -1,0 +1,6 @@
+---
+- include: packages.yml
+- include: volumes.yml
+- include: grub.yml
+- include: networking.yml
+- include: nginx.yml

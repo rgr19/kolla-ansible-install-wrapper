@@ -1,0 +1,17 @@
+- name: insert 'GRUB_CMDLINE_LINUX="net.ifnames=0 biosdevname=0"' to /etc/default/grub
+  lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX='
+    line: GRUB_CMDLINE_LINUX="net.ifnames=0 biosdevname=0"
+  register: grub_need_update
+
+- name: update-grub to have network interfaces names like eth0, eth1, etc.
+  when: grub_need_update.changed
+  block:
+    - shell: grub2-mkconfig -o /boot/grub2/grub.cfg
+      when:  system.os_type == 'redhat'
+      notify: Reboot
+    - shell: update-grub2
+      when: system.os_type == 'debian'
+      notify: Reboot
+

@@ -1,0 +1,29 @@
+---
+- name: Add user "{{ superuser }}" to sudo
+  lineinfile:
+    path: /etc/sudoers.d/{{ superuser }}
+    line: "{{ superuser }} ALL=(ALL) NOPASSWD: ALL"
+    state: present
+    mode: 0440
+    create: yes
+    validate: 'visudo -cf %s'
+- name: Set includedir in sudoers
+  lineinfile:
+    dest: /etc/sudoers
+    line: "#includedir /etc/sudoers.d"
+    state: present
+    validate: "/usr/sbin/visudo -cf %s"
+- name: Ensure group "{{ superuser }}" exists
+  group:
+    name: "{{ superuser }}"
+    state: present
+    system: yes
+- name: Creating user "{{ superuser }}" with admin access
+  user: 
+    name: "{{ superuser }}"
+    password: "{{ ansible_pass | string | password_hash('sha512') }}"
+    group: "{{ superuser }}"
+    append: yes
+    shell: /bin/bash
+    system: yes
+    update_password: on_create

@@ -1,0 +1,24 @@
+[defaults]
+host_key_checking=False
+stdout_callback = debug    
+forks=100
+error_on_undefined_vars = True
+# Enable timing information
+callback_whitelist = timer, profile_tasks
+transform_invalid_group_chars = ignore
+# Use python wrapper
+interpreter_python={{ venv_path }}/bin/python
+shell_type={{ venv_path }}/bin/bashvenv
+private_key_file={{ ssh_key_path }}
+remote_user=openstack
+ansible_config = {{ kolla_config_dir }}/ansible.cfg
+kolla_config_path = {{ kolla_config_dir }}
+ansible_inventory = {{ kolla_config_dir }}/multinode
+virtualenv = "{{ venv_path }}"
+virtualenv_site_packages = "{{ venv_site_packages }}"
+ansible_python_interpreter = "{{ venv_path }}/bin/python"
+
+[ssh_connection]
+pipelining = True
+ssh_args = -o ControlMaster=auto -o ControlPersist=18000 -o PreferredAuthentications=publickey
+control_path = %(directory)s/ansible-ssh-%%h-%%p-%%r

@@ -1,0 +1,18 @@
+- name: Creates DIR {{ kolla_config_dir }}
+  file:
+    path: '{{ item }}'
+    state: directory
+    owner: '{{ superuser }}'
+    group: '{{ superuser }}'
+  register: out
+  with_items:
+    - '{{ kolla_config_dir }}'
+- debug: var=out
+  tags: debug
+
+
+- include: configure/ansible.yml
+- include: configure/inventory.yml
+- include: configure/globals.yml
+- include: configure/passwords.yml
+- include: configure/override.yml # BROKEN

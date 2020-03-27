@@ -1,0 +1,14 @@
+
+python -c "print('#'*200)"
+echo "#### PHASE: {{ args }} BEGIN"
+python -c "print('='*200)"
+{{ exec }} {% if args or kwargs %} \ {% endif %}
+{{{ args + '\\' if args else '' }}
+{{ kwargs }}
+
+if [ $? -ne 0 ]; then
+echo "PHASE: {{ args }} FAILED"
+exit $?
+else
+echo "PHASE: {{ args }} END"
+fi
